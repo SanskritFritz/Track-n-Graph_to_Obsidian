@@ -1,7 +1,7 @@
 #!/usr/bin/env fish
 
-# Import Track & Graph backup data to Obsidian
-# Generate notes with properties, one for each data point
+# Import [Track & Graph](https://github.com/SamAmco/track-and-graph) data to Obsidian.
+# Generate notes with properties, one for each data point.
 # File name is the datetime of a data point.
 # Properties set:
 #     TnG_Tracker(text)
