@@ -17,6 +17,7 @@
 # TODO also filter via label and note
 
 argparse 'd/database=' 't/tracker=+' 'min-date=' 'max-date=' 'dry-run' 'h/help'  -- $argv
+or return
 
 if test $_flag_help
 	echo "Usage:"
