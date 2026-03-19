@@ -4,7 +4,7 @@
 # Generate notes with properties, one for each data point
 # File name is the datetime of a data point.
 # Properties set:
-#     TnG_tracker(text)
+#     TnG_Tracker(text)
 #     TnG_TrackTime(datetime)
 #     TnG_Value (number)
 #     TnG_Label(text)
@@ -131,14 +131,14 @@ while read ResultLine
 		if not test -f "$VaultRoot/$TnG_Path/$TnG_FileName.md"
 			obsidian create path="$TnG_Path/$TnG_FileName.md" < /dev/null
 		end
-		obsidian property:set name="TnG_tracker"   value="$TnG_Tracker"   type=text     path="$TnG_Path/$TnG_FileName.md" < /dev/null
+		obsidian property:set name="TnG_Tracker"   value="$TnG_Tracker"   type=text     path="$TnG_Path/$TnG_FileName.md" < /dev/null
 		obsidian property:set name="TnG_TrackTime" value="$TnG_TrackTime" type=datetime path="$TnG_Path/$TnG_FileName.md" < /dev/null
 		obsidian property:set name="TnG_Value"     value="$TnG_Value"     type=number   path="$TnG_Path/$TnG_FileName.md" < /dev/null
 		obsidian property:set name="TnG_Label"     value="$TnG_Label"     type=text     path="$TnG_Path/$TnG_FileName.md" < /dev/null
 		obsidian property:set name="TnG_Note"      value="$TnG_Note"      type=text     path="$TnG_Path/$TnG_FileName.md" < /dev/null
 	else
 		echo "create path='$TnG_Path/$TnG_FileName.md'"
-		echo "property:set name='TnG_tracker' value='$TnG_Tracker' type=text path='$TnG_Path/$TnG_FileName.md'"
+		echo "property:set name='TnG_Tracker' value='$TnG_Tracker' type=text path='$TnG_Path/$TnG_FileName.md'"
 		echo "property:set name='TnG_TrackTime' value='$TnG_TrackTime' type=datetime path='$TnG_Path/$TnG_FileName.md'"
 		echo "property:set name='TnG_Value' value='$TnG_Value' type=number path='$TnG_Path/$TnG_FileName.md'"
 		echo "property:set name='TnG_Label' value='$TnG_Label' type=text path='$TnG_Path/$TnG_FileName.md'"
