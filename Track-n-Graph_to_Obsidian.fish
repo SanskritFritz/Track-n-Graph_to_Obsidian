@@ -18,18 +18,23 @@
 # Enjoy!
 #     SanskritFritz (gmail)
 
-# TODO also filter via label and note
-#      error detection for Obsidian calls
+# TODO
+# • also filter for labels and notes
+# • error detection for Obsidian calls
 
-argparse 'd/database=' 't/tracker=+' 'min-date=' 'max-date=' 'dry-run' 'h/help' 'csv=' -- $argv
+# Defaults:
+set TrackAndGraphBackup_db "TrackAndGraphBackup.db"
+set NotePath "Data/Track-n-Graph"
+
+argparse 'd/database=' 't/tracker=+' 'min-time=' 'max-time=' 'dry-run' 'h/help' 'csv=' -- $argv
 or return
 
-if test $_flag_help
+if set --query _flag_help
 	echo "Usage:"
 	echo (status --current-filename)" \\"
-	echo "    [-d|--database=</absolute/path/to/TrackAndGraphBackup.db>] \\"
+	echo "    [-d|--database=<path/to/TrackAndGraphBackup.db>] \\"
 	echo "    [-t|--tracker=<tracker> [...]] \\"
-	echo "    [--min-date=<YYYY-MM-DD>] [--max-date=<YYYY-MM-DD>] \\"
+	echo "    [--min-time=<datetime>] [--max-time=<datetime>] \\"
 	echo "    [--csv=<path/to/output.csv>]"
 	echo "    [--dry-run] \\"
 	echo "    [-h|--help]"
@@ -38,35 +43,41 @@ if test $_flag_help
 	echo (status --current-filename)" \\"
 	echo "    --database='/home/user/backup/android/TrackAndGraphBackup.db' \\"
 	echo "    --tracker='Meat' --tracker='Vegetables' \\"
-	echo "    --min-date='2026-01-01' --max-date='2026-02-01'"
+	echo "    --min-time='-3 days 0' --max-time='today 0'"
 	echo
-	echo "All options are optional, if absent, all data points will be imported."
+	echo "Database name defaults to 'TrackAndGraphBackup.db'."
 	echo
-	echo "Obsidian path is determined by the property 'TnG_ROOT: true'"
-	echo "or defaults to 'Data/Track-n-Graph'"
+	echo "Obsidian path is determined by the note property 'TnG_ROOT: true'"
+	echo "where the path is derived from that note's path."
+	echo "If missing, it defaults to 'Data/Track-n-Graph'."
 	echo
-	echo "If the option --csv=<path/to/output.csv> is given,"
-	echo "then ONLY the csv file will be written."
+	echo "With the option --csv ONLY the csv file will be written."
 	echo
 	return
 end
 
-set TrackAndGraphBackup_db "TrackAndGraphBackup.db"
-if test $_flag_database
+set ValueError 0
+
+if set --query _flag_database
 	set TrackAndGraphBackup_db $_flag_database
 end
 if not test -f $TrackAndGraphBackup_db
-	echo "Error: unable to find '$TrackAndGraphBackup_db'"
-	return 1
+	echo "Error: unable to find '$TrackAndGraphBackup_db'!"
+	set ValueError 1
 end
 
-set DefaultPath "Data/Track-n-Graph"
+if set --query _flag_csv
+and not set --query _flag_dry_run
+and not touch "$_flag_csv" 2>/dev/null
+	echo "Error: invalid csv file name: '$_flag_csv'!"
+	set ValueError 1
+end
+
 set TrackersProvided 0
 set TrackersSQL ""
 set Trackers ""
-set ValueError 0
 set i 1
-while test $_flag_tracker[$i]
+while set --query _flag_tracker[$i]
 	if string match --regex --quiet '^[a-zA-Z0-9_]+$' $_flag_tracker[$i]
 		set Trackers "$Trackers,'$_flag_tracker[$i]'"
 	else
@@ -81,27 +92,32 @@ if test $TrackersProvided -eq 1
 	set TrackersSQL "AND (tracker in ("(string sub -s 2 $Trackers)"))"
 end
 
-set MinDate "''"
-if set --query _flag_min_date
-	set MinDate "'$_flag_min_date'"
-	if not string match --regex --quiet '^\d{4}-\d{2}-\d{2}$' $_flag_min_date
-		echo "Error: the value '$_flag_min_date' is not allowed for --min-date!"
+set MinTime ""
+if set --query _flag_min_time
+	set MinTime (date -d "$_flag_min_time" +'%Y-%m-%dT%H:%M:%S' 2>/dev/null)
+	if not test -z $MinTime
+		set MinTimeSQL "AND (track_time >= '$MinTime')"
+	else
+		echo "Error: the value '$_flag_min_time' is not allowed for --min-time!"
 		set ValueError 1
 	end
 end
 
-set MaxDate "''"
-if set --query _flag_max_date
-	set MaxDate "'$_flag_max_date'"
-	if not string match --regex --quiet '^\d{4}-\d{2}-\d{2}$' $_flag_max_date
-		echo "Error: the value '$_flag_max_date' is not allowed for --max-date!"
+set MaxTime ""
+if set --query _flag_max_time
+	set MaxTime (date -d "$_flag_max_time" +'%Y-%m-%dT%H:%M:%S' 2>/dev/null)
+	if not test -z $MaxTime
+		set MaxTimeSQL "AND (track_time <= '$MaxTime')"
+	else
+		echo "Error: the value '$_flag_max_time' is not allowed for --max-time!"
 		set ValueError 1
 	end
 end
 
+# Exit if any error occured
 if test $ValueError -eq 1; return 1; end
 
-# The "string match" inspections above made sure the parameters are SQL-injection-safe
+# The checks above made sure all parameters are SQL-injection-safe
 set SQLquery "
 SELECT tracker, track_time, value, label, note, file_name FROM (
 	SELECT
@@ -117,25 +133,24 @@ SELECT tracker, track_time, value, label, note, file_name FROM (
 )
 WHERE 1=1
 	$TrackersSQL
-	AND ($MinDate = '' OR track_time >= $MinDate)
-	AND ($MaxDate = '' OR track_time <= $MaxDate)
+	$MinTimeSQL
+	$MaxTimeSQL
 ORDER BY epoch desc
 "
-if test $_flag_dry_run
+if set --query _flag_dry_run
 	echo "-- DRY RUN --"
 	echo $SQLquery
 end;
 
-if test $_flag_csv
+if set --query _flag_csv
 	echo csv file: $_flag_csv
 	set csvRow 'TnG_Tracker,TnG_TrackTime,TnG_Value,TnG_Label,TnG_Note'
-	if not test $_flag_dry_run
+	if not set --query _flag_dry_run
 		echo $csvRow > $_flag_csv
 	else
 		echo $csvRow
 	end
 else
-	set NotePath $DefaultPath
 	set RootNote (obsidian search query='["TnG_ROOT":true]' | string collect)
 	if test (echo $RootNote | wc -l) -gt 1
 		echo 'Error: ["TnG_ROOT":true] defined more than once in the vault.'
@@ -158,17 +173,18 @@ while read ResultLine
 	set TnG_Note       $ResultFields[5]
 	set NoteName       $ResultFields[6]
 
-	if test $_flag_csv
+	if set --query _flag_csv
 		set csvRow '"'$TnG_Tracker'",'$TnG_TrackTime','$TnG_Value',"'$TnG_Label'","'$TnG_Note'"'
-		if not test $_flag_dry_run
+		if not set --query _flag_dry_run
 			echo $csvRow >> $_flag_csv
 		else
 			echo $csvRow
 		end
 	else
 		begin
-		if not test $_flag_dry_run
+		if not set --query _flag_dry_run
 			if not test -f "$VaultRoot/$NotePath/$NoteName.md"
+				# '< /dev/null' is necessary because otherwise Obsidian messes the STDOUT while loop
 				obsidian create path="$NotePath/$NoteName.md" < /dev/null
 			end
 			obsidian property:set name="TnG_Tracker"   value="$TnG_Tracker"   type=text     path="$NotePath/$NoteName.md" < /dev/null
