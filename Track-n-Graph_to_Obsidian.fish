@@ -46,6 +46,7 @@ if set --query _flag_help
 	echo "    --min-time='-3 days 0' --max-time='today 0'"
 	echo
 	echo "Database name defaults to 'TrackAndGraphBackup.db'."
+	echo "Min/max time values are validated with 'date -d'".
 	echo
 	echo "Obsidian path is determined by the note property 'TnG_ROOT: true'"
 	echo "where the path is derived from that note's path."
