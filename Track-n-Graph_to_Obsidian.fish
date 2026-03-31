@@ -19,8 +19,9 @@
 #     SanskritFritz (gmail)
 
 # TODO
-# • also filter for labels and notes
-# • error detection for Obsidian calls
+# • Also filter for labels and notes
+# • Error detection for Obsidian calls
+# • Prevent accidental run by requiring a confirmation
 
 # Defaults:
 set TrackAndGraphBackup_db "TrackAndGraphBackup.db"
@@ -73,6 +74,10 @@ and not touch "$_flag_csv" 2>/dev/null
 	echo "Error: invalid csv file name: '$_flag_csv'!"
 	set ValueError 1
 end
+
+# TODO
+# .param set @username 'alice'
+# SELECT * FROM users WHERE username = @username;
 
 set TrackersProvided 0
 set TrackersSQL ""
