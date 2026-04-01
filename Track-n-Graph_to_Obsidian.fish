@@ -21,7 +21,7 @@
 # TODO
 # • Also filter for labels and notes
 # • Error detection for Obsidian calls
-# • Prevent accidental run by requiring a confirmation
+# • Prevent accidental run by requiring a parameter
 
 # Defaults:
 set TrackAndGraphBackup_db "TrackAndGraphBackup.db"
@@ -64,20 +64,20 @@ if set --query _flag_database
 	set TrackAndGraphBackup_db $_flag_database
 end
 if not test -f $TrackAndGraphBackup_db
-	echo "Error: unable to find '$TrackAndGraphBackup_db'!"
+	echo "Error: unable to find '$TrackAndGraphBackup_db'!" >&2
 	set ValueError 1
 end
 
 if set --query _flag_csv
 and not set --query _flag_dry_run
 and not touch "$_flag_csv" 2>/dev/null
-	echo "Error: invalid csv file name: '$_flag_csv'!"
+	echo "Error: invalid csv file name: '$_flag_csv'!" >&2
 	set ValueError 1
 end
 
 # TODO
-# .param set @username 'alice'
-# SELECT * FROM users WHERE username = @username;
+# .param set @bind_variable 'value'
+# SELECT * FROM mytable WHERE field = @bind_variable;
 
 set TrackersProvided 0
 set TrackersSQL ""
@@ -87,7 +87,7 @@ while set --query _flag_tracker[$i]
 	if string match --regex --quiet '^[a-zA-Z0-9_]+$' $_flag_tracker[$i]
 		set Trackers "$Trackers,'$_flag_tracker[$i]'"
 	else
-		echo "Error: the value '$_flag_tracker[$i]' is not allowed for -t|--tracker!"
+		echo "Error: the value '$_flag_tracker[$i]' is not allowed for -t|--tracker!" >&2
 		set ValueError 1
 	end
 	set TrackersProvided 1
@@ -101,10 +101,10 @@ end
 set MinTime ""
 if set --query _flag_min_time
 	set MinTime (date -d "$_flag_min_time" +'%Y-%m-%dT%H:%M:%S' 2>/dev/null)
-	if not test -z $MinTime
+	if test -n $MinTime
 		set MinTimeSQL "AND (track_time >= '$MinTime')"
 	else
-		echo "Error: the value '$_flag_min_time' is not allowed for --min-time!"
+		echo "Error: the value '$_flag_min_time' is not allowed for --min-time!" >&2
 		set ValueError 1
 	end
 end
@@ -112,10 +112,10 @@ end
 set MaxTime ""
 if set --query _flag_max_time
 	set MaxTime (date -d "$_flag_max_time" +'%Y-%m-%dT%H:%M:%S' 2>/dev/null)
-	if not test -z $MaxTime
+	if test -n $MaxTime
 		set MaxTimeSQL "AND (track_time <= '$MaxTime')"
 	else
-		echo "Error: the value '$_flag_max_time' is not allowed for --max-time!"
+		echo "Error: the value '$_flag_max_time' is not allowed for --max-time!" >&2
 		set ValueError 1
 	end
 end
@@ -159,7 +159,7 @@ if set --query _flag_csv
 else
 	set RootNote (obsidian search query='["TnG_ROOT":true]' | string collect)
 	if test (echo $RootNote | wc -l) -gt 1
-		echo 'Error: ["TnG_ROOT":true] defined more than once in the vault.'
+		echo 'Error: ["TnG_ROOT":true] defined more than once in the vault.' >&2
 		return 1
 	end
 	if test $RootNote != "No matches found."
