@@ -129,13 +129,13 @@ if [[ -n "$database" ]]; then
 fi
 
 if [[ ! -f "$TrackAndGraphBackup_db" ]]; then
-    echo "Error: unable to find '$TrackAndGraphBackup_db'!"
+    echo "Error: unable to find '$TrackAndGraphBackup_db'!" >&2
     ValueError=1
 fi
 
 if [[ -n "$csv_file" ]] && [[ "$dry_run" != true ]]; then
     if ! touch "$csv_file" 2>/dev/null; then
-        echo "Error: invalid csv file name: '$csv_file'!"
+        echo "Error: invalid csv file name: '$csv_file'!" >&2
         ValueError=1
     fi
 fi
@@ -149,7 +149,7 @@ for tracker in "${trackers[@]}"; do
     if [[ $tracker =~ ^[a-zA-Z0-9_]+$ ]]; then
         Trackers="$Trackers,'$tracker'"
     else
-        echo "Error: the value '$tracker' is not allowed for -t|--tracker!"
+        echo "Error: the value '$tracker' is not allowed for -t|--tracker!" >&2
         ValueError=1
     fi
     TrackersProvided=1
@@ -167,7 +167,7 @@ if [[ -n "$min_time" ]]; then
     if [[ "$MinTime" ]]; then
         MinTimeSQL="AND (track_time >= '$MinTime')"
     else
-        echo "Error: the value '$min_time' is not allowed for --min-time!"
+        echo "Error: the value '$min_time' is not allowed for --min-time!" >&2
         ValueError=1
     fi
 fi
@@ -180,7 +180,7 @@ if [[ -n "$max_time" ]]; then
     if [[ "$MaxTime" ]]; then
         MaxTimeSQL="AND (track_time <= '$MaxTime')"
     else
-        echo "Error: the value '$max_time' is not allowed for --max-time!"
+        echo "Error: the value '$max_time' is not allowed for --max-time!" >&2
         ValueError=1
     fi
 fi
@@ -229,7 +229,7 @@ else
     RootNoteLineCount=$(echo "$RootNote" | wc -l)
 
     if [[ $RootNoteLineCount -gt 1 ]]; then
-        echo 'Error: ["TnG_ROOT":true] defined more than once in the vault.'
+        echo 'Error: ["TnG_ROOT":true] defined more than once in the vault.' >&2
         exit 1
     fi
 
