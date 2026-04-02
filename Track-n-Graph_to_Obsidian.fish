@@ -21,19 +21,19 @@
 # TODO
 # • Also filter for labels and notes
 # • Error detection for Obsidian calls
-# • Prevent accidental run by requiring a parameter
+# • Make sure Obsidian GUI is already running
 
 # Defaults:
 set TrackAndGraphBackup_db "TrackAndGraphBackup.db"
 set NotePath "Data/Track-n-Graph"
 
-argparse 'd/database=' 't/tracker=+' 'min-time=' 'max-time=' 'dry-run' 'h/help' 'csv=' -- $argv
+argparse 'd/database=?' 't/tracker=+' 'min-time=' 'max-time=' 'dry-run' 'h/help' 'csv=' -- $argv
 or return
 
 if set --query _flag_help
 	echo "Usage:"
 	echo (status --current-filename)" \\"
-	echo "    [-d|--database=<path/to/TrackAndGraphBackup.db>] \\"
+	echo "    -d|--database[=<path/to/TrackAndGraphBackup.db>] \\"
 	echo "    [-t|--tracker=<tracker> [...]] \\"
 	echo "    [--min-time=<datetime>] [--max-time=<datetime>] \\"
 	echo "    [--csv=<path/to/output.csv>]"
@@ -46,8 +46,10 @@ if set --query _flag_help
 	echo "    --tracker='Meat' --tracker='Vegetables' \\"
 	echo "    --min-time='-3 days 0' --max-time='today 0'"
 	echo
-	echo "Database name defaults to 'TrackAndGraphBackup.db'."
-	echo "Min/max time values are validated with 'date -d'".
+	echo "-d or --database is mandatory (this prevents accidental executions)"
+	echo "If no value was given, the name defaults to 'TrackAndGraphBackup.db'."
+	echo
+	echo "Min/max time values are validated with 'date -d'."
 	echo
 	echo "Obsidian path is determined by the note property 'TnG_ROOT: true'"
 	echo "where the path is derived from that note's path."
@@ -61,12 +63,22 @@ end
 set ValueError 0
 
 if set --query _flag_database
-	set TrackAndGraphBackup_db $_flag_database
-end
-if not test -f $TrackAndGraphBackup_db
-	echo "Error: unable to find '$TrackAndGraphBackup_db'!" >&2
+	if test -n "$_flag_database"
+		set TrackAndGraphBackup_db "$_flag_database"
+	end
+	echo "$_flag_database"
+	if not test -f $TrackAndGraphBackup_db
+		echo "Error: unable to find '$TrackAndGraphBackup_db'!" >&2
+		set ValueError 1
+	end
+else
+	echo "Error: -d or --database is mandatory! This prevents accidental executions." >&2
 	set ValueError 1
 end
+
+echo $TrackAndGraphBackup_db
+echo $_flag_database
+return
 
 if set --query _flag_csv
 and not set --query _flag_dry_run
