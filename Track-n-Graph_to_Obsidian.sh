@@ -236,7 +236,7 @@ if [[ -n "$max_time" ]]; then
 fi
 
 # Exit if any error occurred
-if [[ $error_happened -eq 1 ]]; then
+if [[ $error_happened == true ]]; then
 	exit 1
 fi
 
