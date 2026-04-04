@@ -21,7 +21,6 @@
 # TODO
 # • Also filter for labels and notes
 # • Error detection for Obsidian calls
-# • CSV only to STDOUT
 
 # Defaults:
 TrackAndGraphBackup_db="TrackAndGraphBackup.db"
