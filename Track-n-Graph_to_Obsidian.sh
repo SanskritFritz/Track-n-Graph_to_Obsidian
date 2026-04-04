@@ -44,7 +44,7 @@ database_file=""
 declare -a trackers
 min_time=""
 max_time=""
-csv_file=""
+csv_output=false
 dry_run=false
 help=false
 error_happened=false
@@ -144,22 +144,8 @@ while [[ $# -gt 0 ]]; do
 			fi
 			shift 1
 			;;
-		--csv=*)
-			csv_file="${1#*=}"
-			if [[ -z "$csv_file" ]]; then
-				echo "Error: value for --csv is mandatory!" >&2
-				error_happened=true
-			fi
-			shift 1
-			;;
 		--csv)
-			if [[ -n "$2" && "$2" != -* ]]; then
-				csv_file="$2"
-				shift 1
-			else
-				echo "Error: value for --csv is mandatory!" >&2
-				error_happened=true
-			fi
+			csv_output=true
 			shift 1
 			;;
 		--dry-run)
@@ -178,7 +164,7 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-if [[ "$help" == true ]]; then
+if [[ $help == true ]]; then
 	usage="
 	Usage:
 	$0 \\
@@ -186,7 +172,7 @@ if [[ "$help" == true ]]; then
 		[-t|--tracker=<tracker> [...]] \\
 		[--min-time=<datetime>] [--max-time=<datetime>] \\
 		[-o|obsidian-path=<obsidian/path/>]
-		[--csv=<path/to/output.csv>] \\
+		[--csv] \\
 		[--dry-run] \\
 		[-h|--help]
 
@@ -204,7 +190,7 @@ if [[ "$help" == true ]]; then
 
 	Obsidian path defaults to '$NotePath'.
 
-	With the option --csv ONLY the csv file will be written.
+	With the option --csv ONLY the STDOUT will be written.
 	"
 	echo "$usage"
 	exit 0
@@ -216,13 +202,6 @@ if [[ -z "$database_file" ]]; then
 elif [[ ! -f "$database_file" ]]; then
 	echo "Error: unable to find database '$database_file'!" >&2
 	error_happened=true
-fi
-
-if [[ -n "$csv_file" ]] && [[ "$dry_run" != true ]]; then
-	if ! touch "$csv_file" 2>/dev/null; then
-		echo "Error: invalid csv file name: '$csv_file'!" >&2
-		error_happened=true
-	fi
 fi
 
 # Build tracker SQL clause
@@ -291,32 +270,21 @@ WHERE 1=1
 	$max_time_SQL
 ORDER BY epoch desc"
 
-if [[ "$dry_run" == true ]]; then
+if [[ $dry_run == true ]]; then
 	echo "-- DRY RUN --"
 	echo "$SQLquery"
 fi
 
-if [[ -n "$csv_file" ]]; then
-	echo "CSV file: $csv_file"
-	csv_row='TnG_Tracker,TnG_TrackTime,TnG_Value,TnG_Label,TnG_Note'
-	if [[ "$dry_run" != true ]]; then
-		echo "$csv_row" > "$csv_file"
-	else
-		echo "$csv_row"
-	fi
+if [[ $csv_output == true ]]; then
+	echo 'TnG_Tracker,TnG_TrackTime,TnG_Value,TnG_Label,TnG_Note'
 else
 	vaultroot_path=$(obsidian vault info=path)
 fi
 
 echo "$SQLquery" | sqlite3 "$TrackAndGraphBackup_db" |
 while IFS='|' read -r TnG_Tracker TnG_TrackTime TnG_Value TnG_Label TnG_Note NoteName; do
-	if [[ -n "$csv_file" ]]; then
-		csv_row="\"$TnG_Tracker\",$TnG_TrackTime,$TnG_Value,\"$TnG_Label\",\"$TnG_Note\""
-		if [[ "$dry_run" != true ]]; then
-			echo "$csv_row" >> "$csv_file"
-		else
-			echo "$csv_row"
-		fi
+	if [[ $csv_output == true ]]; then
+		echo "\"$TnG_Tracker\",$TnG_TrackTime,$TnG_Value,\"$TnG_Label\",\"$TnG_Note\""
 	else
 		if [[ "$dry_run" != true ]]; then
 			if [[ ! -f "$vaultroot_path/$NotePath/$NoteName.md" ]]; then
