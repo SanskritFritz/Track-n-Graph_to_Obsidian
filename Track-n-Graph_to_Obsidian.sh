@@ -21,12 +21,23 @@
 # TODO
 # • Also filter for labels and notes
 # • Error detection for Obsidian calls
-# • Make sure Obsidian GUI is already running
 # • set @bind_variable 'value': SELECT * FROM mytable WHERE field = @bind_variable;
 
 # Defaults:
 TrackAndGraphBackup_db="TrackAndGraphBackup.db"
 note_path="Data/Track-n-Graph"
+
+obsidian_running=false
+for pid in $(pgrep electron); do
+	# if grep --quiet "obsidian" /proc/$pid/cmdline 2>/dev/null; then
+	if grep --quiet "obsidian" /proc/$pid/cmdline; then
+		obsidian_running=true
+	fi
+done
+if [[ $obsidian_running == false ]]; then
+	echo "Please start Obsidian first!"
+	exit 1
+fi
 
 # Parse arguments
 database_file=""
