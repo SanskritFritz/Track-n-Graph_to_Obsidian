@@ -28,8 +28,7 @@ NotePath="Data/Track-n-Graph"
 
 obsidian_running=false
 for pid in $(pgrep electron); do
-	# if grep --quiet "obsidian" /proc/$pid/cmdline 2>/dev/null; then
-	if grep --quiet "obsidian" /proc/$pid/cmdline; then
+	if grep --quiet "obsidian" /proc/$pid/cmdline 2>/dev/null; then
 		obsidian_running=true
 	fi
 done
