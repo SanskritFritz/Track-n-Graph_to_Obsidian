@@ -21,11 +21,11 @@
 # TODO
 # • Also filter for labels and notes
 # • Error detection for Obsidian calls
-# • set @bind_variable 'value': SELECT * FROM mytable WHERE field = @bind_variable;
+# • CSV only to STDOUT
 
 # Defaults:
 TrackAndGraphBackup_db="TrackAndGraphBackup.db"
-note_path="Data/Track-n-Graph"
+NotePath="Data/Track-n-Graph"
 
 obsidian_running=false
 for pid in $(pgrep electron); do
@@ -126,6 +126,24 @@ while [[ $# -gt 0 ]]; do
 			fi
 			shift 1
 			;;
+		-o=*|--obsidian-path=*)
+			NotePath="${1#*=}"
+			if [[ -z "$NotePath" ]]; then
+				echo "Error: value for -o|--obsidian-path is mandatory!" >&2
+				error_happened=true
+			fi
+			shift 1
+			;;
+		-o=|--obsidian-path=)
+			if [[ -n "$2" && "$2" != -* ]]; then
+				NotePath="$2"
+				shift 1
+			else
+				echo "Error: value for -o|--obsidian-path is mandatory!" >&2
+				error_happened=true
+			fi
+			shift 1
+			;;
 		--csv=*)
 			csv_file="${1#*=}"
 			if [[ -z "$csv_file" ]]; then
@@ -161,32 +179,34 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$help" == true ]]; then
-	echo "Usage:"
-	echo "$0 \\"
-	echo "    [-d|--database=<path/to/TrackAndGraphBackup.db>] \\"
-	echo "    [-t|--tracker=<tracker> [...]] \\"
-	echo "    [--min-time=<datetime>] [--max-time=<datetime>] \\"
-	echo "    [--csv=<path/to/output.csv>]"
-	echo "    [--dry-run] \\"
-	echo "    [-h|--help]"
-	echo
-	echo "Example:"
-	echo "$0 \\"
-	echo "    --database='/home/user/backup/android/TrackAndGraphBackup.db' \\"
-	echo "    --tracker='Meat' --tracker='Vegetables' \\"
-	echo "    --min-time='-3 days 0' --max-time='today 0'"
-	echo
-	echo "-d or --database is mandatory (this prevents accidental run)"
-	echo "If no value was given, the name defaults to '$TrackAndGraphBackup_db'."
-	echo
-	echo "Min/max time values are validated with 'date -d'."
-	echo
-	echo "Obsidian path is determined by the note property 'TnG_ROOT: true'"
-	echo "where the path is derived from that note's path."
-	echo "If missing, it defaults to 'Data/Track-n-Graph'."
-	echo
-	echo "With the option --csv ONLY the csv file will be written."
-	echo
+	usage="
+	Usage:
+	$0 \\
+		[-d|--database=<path/to/TrackAndGraphBackup.db>] \\
+		[-t|--tracker=<tracker> [...]] \\
+		[--min-time=<datetime>] [--max-time=<datetime>] \\
+		[-o|obsidian-path=<obsidian/path/>]
+		[--csv=<path/to/output.csv>] \\
+		[--dry-run] \\
+		[-h|--help]
+
+	Example:
+	$0 \\
+		--database='/backup/android/TrackAndGraphBackup.db' \\
+		--obsidian-path='Data/Track-n-Graph'
+		--tracker='Meat' --tracker='Vegetables' \\
+		--min-time='-3 days 0' --max-time='today 0'
+
+	-d or --database is mandatory (this prevents accidental run)
+	If no value is given, the name defaults to '$TrackAndGraphBackup_db'.
+
+	Min/max time values are validated with 'date -d'.
+
+	Obsidian path defaults to '$NotePath'.
+
+	With the option --csv ONLY the csv file will be written.
+	"
+	echo "$usage"
 	exit 0
 fi
 
@@ -285,18 +305,6 @@ if [[ -n "$csv_file" ]]; then
 		echo "$csv_row"
 	fi
 else
-	root_note=$(obsidian search query='["TnG_ROOT":true]')
-	root_notes_count=$(echo "$root_note" | wc -l)
-
-	if [[ $root_notes_count -gt 1 ]]; then
-		echo 'Error: ["TnG_ROOT":true] defined more than once in the vault.' >&2
-		exit 1
-	fi
-
-	if [[ "$root_note" != "No matches found." ]]; then
-		note_path=$(dirname "$root_note")
-	fi
-
 	vaultroot_path=$(obsidian vault info=path)
 fi
 
@@ -311,21 +319,22 @@ while IFS='|' read -r TnG_Tracker TnG_TrackTime TnG_Value TnG_Label TnG_Note Not
 		fi
 	else
 		if [[ "$dry_run" != true ]]; then
-			if [[ ! -f "$vaultroot_path/$note_path/$NoteName.md" ]]; then
-				obsidian create path="$note_path/$NoteName.md" < /dev/null
+			if [[ ! -f "$vaultroot_path/$NotePath/$NoteName.md" ]]; then
+				# '< /dev/null' is necessary because otherwise Obsidian messes with the STDOUT while loop
+				obsidian create path="$NotePath/$NoteName.md" < /dev/null
 			fi
-			obsidian property:set name="TnG_Tracker"   value="$TnG_Tracker"   type=text     path="$note_path/$NoteName.md" < /dev/null
-			obsidian property:set name="TnG_TrackTime" value="$TnG_TrackTime" type=datetime path="$note_path/$NoteName.md" < /dev/null
-			obsidian property:set name="TnG_Value"     value="$TnG_Value"     type=number   path="$note_path/$NoteName.md" < /dev/null
-			obsidian property:set name="TnG_Label"     value="$TnG_Label"     type=text     path="$note_path/$NoteName.md" < /dev/null
-			obsidian property:set name="TnG_Note"      value="$TnG_Note"      type=text     path="$note_path/$NoteName.md" < /dev/null
+			obsidian property:set name="TnG_Tracker"   value="$TnG_Tracker"   type=text     path="$NotePath/$NoteName.md" < /dev/null
+			obsidian property:set name="TnG_TrackTime" value="$TnG_TrackTime" type=datetime path="$NotePath/$NoteName.md" < /dev/null
+			obsidian property:set name="TnG_Value"     value="$TnG_Value"     type=number   path="$NotePath/$NoteName.md" < /dev/null
+			obsidian property:set name="TnG_Label"     value="$TnG_Label"     type=text     path="$NotePath/$NoteName.md" < /dev/null
+			obsidian property:set name="TnG_Note"      value="$TnG_Note"      type=text     path="$NotePath/$NoteName.md" < /dev/null
 		else
-			echo "create path='$note_path/$NoteName.md'"
-			echo "property:set name='TnG_Tracker' value='$TnG_Tracker' type=text path='$note_path/$NoteName.md'"
-			echo "property:set name='TnG_TrackTime' value='$TnG_TrackTime' type=datetime path='$note_path/$NoteName.md'"
-			echo "property:set name='TnG_Value' value='$TnG_Value' type=number path='$note_path/$NoteName.md'"
-			echo "property:set name='TnG_Label' value='$TnG_Label' type=text path='$note_path/$NoteName.md'"
-			echo "property:set name='TnG_Note' value='$TnG_Note' type=text path='$note_path/$NoteName.md'"
+			echo "create path='$NotePath/$NoteName.md'"
+			echo "property:set name='TnG_Tracker' value='$TnG_Tracker' type=text path='$NotePath/$NoteName.md'"
+			echo "property:set name='TnG_TrackTime' value='$TnG_TrackTime' type=datetime path='$NotePath/$NoteName.md'"
+			echo "property:set name='TnG_Value' value='$TnG_Value' type=number path='$NotePath/$NoteName.md'"
+			echo "property:set name='TnG_Label' value='$TnG_Label' type=text path='$NotePath/$NoteName.md'"
+			echo "property:set name='TnG_Note' value='$TnG_Note' type=text path='$NotePath/$NoteName.md'"
 		fi
 	fi
 done
