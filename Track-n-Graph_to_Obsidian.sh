@@ -132,7 +132,7 @@ while [[ $# -gt 0 ]]; do
 			fi
 			shift 1
 			;;
-		-o=|--obsidian-path=)
+		-o|--obsidian-path)
 			if [[ -n "$2" && "$2" != -* ]]; then
 				NotePath="$2"
 				shift 1
