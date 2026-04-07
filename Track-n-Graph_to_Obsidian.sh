@@ -17,6 +17,10 @@
 # For usage: --help
 # Enjoy!
 #     SanskritFritz (gmail)
+#
+# Dependencies
+#   • Sqlite3
+#   • Obsidian (when not --csv)
 
 # TODO
 # • Also filter for labels and notes
@@ -25,17 +29,6 @@
 # Defaults:
 TrackAndGraphBackup_db="TrackAndGraphBackup.db"
 NotePath="Data/Track-n-Graph"
-
-obsidian_running=false
-for pid in $(pgrep electron); do
-	if grep --quiet "obsidian" /proc/$pid/cmdline 2>/dev/null; then
-		obsidian_running=true
-	fi
-done
-if [[ $obsidian_running == false ]]; then
-	echo "Please start Obsidian first!"
-	exit 1
-fi
 
 # Parse arguments
 database_file=""
@@ -241,6 +234,24 @@ if [[ -n "$max_time" ]]; then
 		echo "Error: the value '$max_time' is not allowed for --max-time!" >&2
 		error_happened=true
 	fi
+fi
+
+# Check dependencies
+if ! which sqlite3 > /dev/null 2>&1; then
+	echo "Error: unable to run sqlite3!" >&2
+	error_happened=true
+fi
+
+obsidian_running=false
+for pid in $(pgrep electron 2>/dev/null); do
+	if grep --quiet "obsidian" /proc/$pid/cmdline 2>/dev/null; then
+		obsidian_running=true
+	fi
+done
+if [[ $obsidian_running == false && $csv_output == false ]]; then
+	echo "Error: Obsidian is not running!" >&2
+	echo "(Starting it is necessary because CLI commands work with an active instance)" >&2
+	error_happened=true
 fi
 
 # Exit if any error occurred
