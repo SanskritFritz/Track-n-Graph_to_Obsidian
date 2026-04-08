@@ -4,20 +4,13 @@
 A Bash script to export [Track & Graph](https://samamco.github.io/track-and-graph/) backup data points to [Obsidian](https://obsidian.md/) or CSV.
 
 Generate notes with properties, one for each data point.
-
 File name is the datetime of a data point.
-
 Properties set:
-
-    TnG_Tracker (*text*)
-
-    TnG_TrackTime (*datetime*)
-
-    TnG_Value (*number*)
-
-    TnG_Label (*text*)
-
-    TnG_Note (*text*)
+- TnG_Tracker (*text*)
+- TnG_TrackTime (*datetime*)
+- TnG_Value (*number*)
+- TnG_Label (*text*)
+- TnG_Note (*text*)
 
 Alternatively CSV output can be written to a file,
 which can be imported into Obsidian via its import plugin.
