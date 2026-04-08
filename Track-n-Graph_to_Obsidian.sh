@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
-# Import [Track & Graph](https://github.com/SamAmco/track-and-graph) data to Obsidian or CSV file.
+# Export [Track & Graph](https://github.com/SamAmco/track-and-graph) backup data to Obsidian or CSV.
 # Generate notes with properties, one for each data point.
 # File name is the datetime of a data point.
 # Properties set:
-#     TnG_Tracker(text)
-#     TnG_TrackTime(datetime)
+#     TnG_Tracker (text)
+#     TnG_TrackTime (datetime)
 #     TnG_Value (number)
-#     TnG_Label(text)
-#     TnG_Note(text)
+#     TnG_Label (text)
+#     TnG_Note (text)
 #
-# Alternatively a csv file can be written instead of Obsidian,
-# which then can be imported into Obsidian via its import plugin.
+# Alternatively CSV output can be written to a file,
+# which can be imported into Obsidian via its import plugin.
 # This is recommended for an initial mass import, since it's **much** faster.
 #
 # For usage: --help
