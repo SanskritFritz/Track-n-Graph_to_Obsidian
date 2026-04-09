@@ -162,7 +162,7 @@ if [[ $help == true ]]; then
 		[-d|--database=<path/to/TrackAndGraphBackup.db>] \\
 		[-t|--tracker=<tracker> [...]] \\
 		[--min-time=<datetime>] [--max-time=<datetime>] \\
-		[-o|obsidian-path=<obsidian/path/>]
+		[-o|obsidian-path=<obsidian/path/>] \\
 		[--csv] \\
 		[--dry-run] \\
 		[-h|--help]
@@ -170,7 +170,7 @@ if [[ $help == true ]]; then
 	Example:
 	$0 \\
 		--database='/backup/android/TrackAndGraphBackup.db' \\
-		--obsidian-path='Data/Track-n-Graph'
+		--obsidian-path='Data/Track-n-Graph' \\
 		--tracker='Meat' --tracker='Vegetables' \\
 		--min-time='-3 days 0' --max-time='today 0'
 
