@@ -12,9 +12,14 @@ Properties set:
 - TnG_Label (*text*)
 - TnG_Note (*text*)
 
-Alternatively CSV output can be written to a file,
+Alternatively CSV output can be redirected to a file,
 which can be imported into Obsidian via its import plugin.
-This is recommended for an initial mass import, since it's **much** faster.
+This is recommended for an initial mass import, since it's **much** faster,
+but it creates duplicates when importing data points already present.
+The advantage of direct write is that it doesn't duplicate data points,
+but overwrites them, which is useful if a data point has been changed.
+Obsidian is courteous enough not to change a note if the same data is written,
+so the last modification date of the file remains the same.
 
 
 ```
